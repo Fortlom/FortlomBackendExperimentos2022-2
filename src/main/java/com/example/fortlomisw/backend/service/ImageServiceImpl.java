@@ -15,9 +15,6 @@ import java.util.zip.Inflater;
 public class ImageServiceImpl implements ImageService {
 
 
-
-
-
     @Override
     public byte[] compressBytes(byte[] data) {
         Deflater deflater = new Deflater();

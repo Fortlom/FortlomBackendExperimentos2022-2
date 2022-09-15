@@ -5,6 +5,7 @@ import com.example.fortlomisw.backend.domain.persistence.ForumRepository;
 import com.example.fortlomisw.backend.domain.persistence.UserRepository;
 import com.example.fortlomisw.backend.domain.service.ForumService;
 import com.example.fortlomisw.shared.exception.ResourceNotFoundException;
+import com.example.fortlomisw.shared.exception.ResourceValidationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,10 +16,6 @@ import java.util.List;
 
 @Service
 public class ForumServiceImpl implements ForumService {
-
-
-
-
 
     private static final String ENTITY = "Forum";
     private static final String ENTITY2 = "User";
@@ -51,16 +48,40 @@ public class ForumServiceImpl implements ForumService {
         return forumRepository.findById(ForumId)
                 .orElseThrow(() -> new ResourceNotFoundException(ENTITY, ForumId));
     }
-
+    @Override
+    public Boolean isWrongTitle(String forumTitle){
+        // Initialize an ArrayList
+        String hateWords[] = new String[9];
+        hateWords[0] = "inutil";
+        hateWords[1] = "vago";
+        hateWords[2] = "basura";
+        hateWords[3] = "lata";
+        hateWords[4] = "bored";
+        hateWords[5] = "aburrido";
+        hateWords[6] = "feo";
+        hateWords[7] = "terrible";
+        hateWords[8] = "asco";
+        for(int i = 0; i < 9; i++){
+            if(forumTitle.contains(hateWords[i])){
+                return true;
+            }
+        }
+        return false;
+    }
     @Override
     public Forum createForum(Long userId, Forum request) {
 
-        return userRepository.findById(userId)
-                .map(users -> {
-                    request.setPerson(users);
-                    return forumRepository.save(request);
-                })
-                .orElseThrow(() -> new ResourceNotFoundException(ENTITY2, userId));
+            if(isWrongTitle(request.getForumname())){
+            throw new ResourceValidationException(ENTITY, "Forum Title is considered hater");
+        }else
+        {
+                return userRepository.findById(userId)
+                        .map(users -> {
+                            request.setPerson(users);
+                            return forumRepository.save(request);
+                        })
+                        .orElseThrow(() -> new ResourceNotFoundException(ENTITY2, userId));
+        }
     }
 
     @Override

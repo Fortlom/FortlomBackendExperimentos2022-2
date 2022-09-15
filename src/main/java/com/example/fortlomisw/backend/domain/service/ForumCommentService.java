@@ -13,5 +13,6 @@ public interface ForumCommentService {
     ForumComment create(Long userId, Long forumId, ForumComment forumcomment);
     ForumComment update(Long forumcommentId, ForumComment request);
     List<ForumComment> getForumCommentByForumId(Long forumId);
+    Boolean IsHateComment(String commentDescription);
     ResponseEntity<?> delete(Long forumcommentId);
 }

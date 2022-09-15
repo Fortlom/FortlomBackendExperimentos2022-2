@@ -8,12 +8,15 @@ import com.example.fortlomisw.backend.domain.persistence.ForumRepository;
 import com.example.fortlomisw.backend.domain.persistence.UserRepository;
 import com.example.fortlomisw.backend.domain.service.ForumCommentService;
 import com.example.fortlomisw.shared.exception.ResourceNotFoundException;
+import com.example.fortlomisw.shared.exception.ResourceValidationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import javax.validation.Validator;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -52,20 +55,45 @@ public class ForumCommentServiceImpl implements ForumCommentService {
         return forumcommentRepository.findById(forumcommentId)
                 .orElseThrow(() -> new ResourceNotFoundException(ENTITY, forumcommentId));
     }
-
+    @Override
+    public Boolean IsHateComment(String commentDescription){
+        // Initialize an ArrayList
+        String hateWords[] = new String[9];
+        hateWords[0] = "inutil";
+        hateWords[1] = "vago";
+        hateWords[2] = "basura";
+        hateWords[3] = "lata";
+        hateWords[4] = "bored";
+        hateWords[5] = "aburrido";
+        hateWords[6] = "feo";
+        hateWords[7] = "terrible";
+        hateWords[8] = "asco";
+        for(int i = 0; i < 9; i++){
+            if(commentDescription.contains(hateWords[i])){
+                return true;
+            }
+        }
+        return false;
+    }
     @Override
     public ForumComment create(Long userId, Long forumId, ForumComment request) {
         Date date = new Date();
         Person user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Person", userId));
-        return forumRepository.findById(forumId)
-                .map(forums -> {
-                    request.setForum(forums);
-                    request.setPerson(user);
-                    request.setRegisterdate(date);
-                    return forumcommentRepository.save(request);
-                })
-                .orElseThrow(() -> new ResourceNotFoundException("Forum", forumId));
+
+        if(IsHateComment(request.getCommentdescription())){
+            throw new ResourceValidationException(ENTITY, "Coment is considered hater");
+        }else {
+            return forumRepository.findById(forumId)
+                    .map(forums -> {
+                        request.setForum(forums);
+                        request.setPerson(user);
+                        request.setRegisterdate(date);
+
+                        return forumcommentRepository.save(request);
+                    })
+                    .orElseThrow(() -> new ResourceNotFoundException("Forum", forumId));
+        }
     }
 
     @Override

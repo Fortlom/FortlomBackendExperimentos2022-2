@@ -2,11 +2,10 @@ package com.example.fortlomisw.backend.service;
 
 import com.example.fortlomisw.backend.domain.model.entity.Fanatic;
 import com.example.fortlomisw.backend.domain.model.entity.Rate;
-import com.example.fortlomisw.backend.domain.persistence.ArtistRepository;
-import com.example.fortlomisw.backend.domain.persistence.FanaticRepository;
-import com.example.fortlomisw.backend.domain.persistence.RateRepository;
+import com.example.fortlomisw.backend.domain.persistence.*;
 import com.example.fortlomisw.backend.domain.service.RateService;
 import com.example.fortlomisw.shared.exception.ResourceNotFoundException;
+import com.example.fortlomisw.shared.exception.ResourceValidationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,7 +17,8 @@ import javax.validation.Validator;
 @Service
 public class RateServiceImpl implements RateService {
 
-
+    private static final Integer LIMIT_DANGEROURS = 3;
+    private static final Integer LIMIT_HATER = 3;
     private static final String ENTITY = "Rate";
     @Autowired
     private  RateRepository rateRepository;
@@ -26,8 +26,11 @@ public class RateServiceImpl implements RateService {
     private  FanaticRepository fanaticRepository;
     @Autowired
     private  ArtistRepository artistRepository;
+    @Autowired
+    private FollowRepository followRepository;
 
-
+    @Autowired
+    private ReportRepository reportRepository;
     public RateServiceImpl() {
 
     }
@@ -48,18 +51,39 @@ public class RateServiceImpl implements RateService {
         return rateRepository.findById(rateId)
                 .orElseThrow(() -> new ResourceNotFoundException(ENTITY, rateId));
     }
-
+    public Boolean isItLowerThanThree(Integer rate){
+        if(rate<LIMIT_HATER){
+            return true;
+        }else{
+            return false;
+        }
+    }
+    public Boolean userIsHater(Long userid){
+        Integer a=reportRepository.findByUserMainId(userid).size();
+        if(a>=LIMIT_DANGEROURS){
+            return true;
+        }else{
+            return false;
+        }
+    }
     @Override
     public Rate create(Long FanaticId, Long ArtistId, Rate request) {
+
         Fanatic faan = fanaticRepository.findById(FanaticId)
                 .orElseThrow(() -> new ResourceNotFoundException("Fanatic", FanaticId));
-        return artistRepository.findById(ArtistId)
-                .map(artist -> {
-                    request.setArtist(artist);
-                    request.setFanatic(faan);
-                    return rateRepository.save(request);
-                })
-                .orElseThrow(() -> new ResourceNotFoundException("Artist", ArtistId));
+        //probe
+        if(isItLowerThanThree(request.getRates())&&(userIsHater(faan.getId()))){
+            throw new ResourceValidationException(ENTITY, "User  is considered hater");
+        }
+        else {
+            return artistRepository.findById(ArtistId)
+                    .map(artist -> {
+                        request.setArtist(artist);
+                        request.setFanatic(faan);
+                        return rateRepository.save(request);
+                    })
+                    .orElseThrow(() -> new ResourceNotFoundException("Artist", ArtistId));
+        }
     }
 
     @Override

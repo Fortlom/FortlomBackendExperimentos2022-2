@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.validation.Validator;
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -50,7 +51,16 @@ public class EventServiceImpl implements EventService {
         return eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException(ENTITY, eventId));
     }
+    @Override
+    public Boolean isOutdated(Date eventDate){
+        Date todayDate = new Date();
+        if(eventDate.before(todayDate)){
+            return true;
+        }else{
+            return false;
+        }
 
+    }
     @Override
     public Event createEvent(Long artistId, Event request) {
 

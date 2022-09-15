@@ -16,5 +16,6 @@ public interface ForumService {
     Forum updateForum(Long forumId, Forum request);
     List<Forum> getForumsByUserId(Long userId);
     ResponseEntity<?> deleteForum(Long forumId);
+    Boolean isWrongTitle(String forumTitle);
     void seed();
 }
